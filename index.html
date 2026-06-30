@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pagram - Retro Edition</title>
+
+  <script>
+    const BASE_URL = "localhost:8080";
+
+    function showPage(id) {
+      document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+      document.getElementById(id).style.display = "block";
+    }
+
+    async function apiGet(path) {
+      const res = await fetch(BASE_URL + path);
+      return res.json();
+    }
+
+    async function apiSend(path, method, body) {
+      const res = await fetch(BASE_URL + path, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      return res.json();
+    }
+
+    async function loadGamesHome() {
+      const container = document.getElementById("homeGamesGrid");
+      container.innerHTML = "Loading games...";
+
+      try {
+        const res = await fetch(BASE_URL + "/api/games");
+        const games = await res.json();
+
+        container.innerHTML = "";
+
+        games.forEach(game => {
+          const table = document.createElement("table");
+          table.border = "1";
+          table.cellPadding = "5";
+          table.style.width = "180px";
+          table.style.margin = "10px";
+          table.style.display = "inline-block";
+          table.style.verticalAlign = "top";
+          table.style.backgroundColor = "#f4f4f4";
+
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+
+          const title = document.createElement("div");
+          title.textContent = game.name || "Untitled Game";
+          title.style.fontWeight = "bold";
+
+          const desc = document.createElement("div");
+          desc.textContent = game.description || "No description";
+
+          cell.appendChild(title);
+          cell.appendChild(desc);
+
+          row.appendChild(cell);
+          table.appendChild(row);
+          container.appendChild(table);
+        });
+
+      } catch (err) {
+        container.innerHTML = "Error loading games.";
+      }
+    }
+  </script>
+</head>
+
+<body style="font-family: Arial;" onload="showPage('home'); loadGamesHome();">
+
+<!-- HEADER -->
+<table width="100%" cellpadding="10" bgcolor="#c0d0ff" style="border-bottom:1px solid black;">
+  <tr>
+    <td><h2 style="margin:0;">My Platform</h2></td>
+    <td align="right" valign="bottom">
+      <a href="#" onclick="showPage('home')">Home</a> |
+      <a href="#" onclick="showPage('dashboard')">Dashboard</a> |
+      <a href="#" onclick="showPage('login')">Login</a> |
+      <a href="#" onclick="showPage('signup')">Signup</a>
+    </td>
+  </tr>
+</table>
+
+<!-- MAIN LAYOUT -->
+<table width="100%" cellpadding="10">
+  <tr>
+
+    <!-- SIDEBAR -->
+    <td width="200" valign="top" bgcolor="#e0e0e0" style="border-right:1px solid black;">
+      <b>Navigation</b><br><br>
+
+      <a href="#" onclick="showPage('home')">Home</a><br>
+      <a href="#" onclick="showPage('dashboard')">Dashboard</a><br>
+      <a href="#" onclick="showPage('players')">Players</a><br>
+      <a href="#" onclick="showPage('games')">Games</a><br>
+      <a href="#" onclick="showPage('servers')">Servers</a><br>
+      <a href="#" onclick="showPage('rawapi')">Raw API</a><br>
+
+      <br><b>Account</b><br>
+      <a href="#" onclick="showPage('login')">Login</a><br>
+      <a href="#" onclick="showPage('signup')">Signup</a><br>
+    </td>
+
+    <!-- MAIN CONTENT -->
+    <td valign="top">
+
+      <!-- HOME PAGE -->
+      <div id="home" class="page">
+        <h2>Featured Games</h2>
+        <div id="homeGamesGrid">Loading...</div>
+
+        <hr>
+
+        <h2>News</h2>
+        <table border="1" cellpadding="10" width="100%">
+          <tr><td><b>Platform Update</b><br>New features coming soon.</td></tr>
+          <tr><td><b>New Games Added</b><br>Check out the latest games above.</td></tr>
+        </table>
+
+        <hr>
+
+        <h2>About</h2>
+        <p>This is a retro‑style platform homepage built in pure HTML.</p>
+      </div>
+
+      <!-- LOGIN PAGE -->
+      <div id="login" class="page" style="display:none;">
+        <h2>Login</h2>
+        <form id="loginForm">
+          <label>Username: <input id="loginUser"></label><br>
+          <label>Password: <input id="loginPass" type="password"></label><br>
+          <button type="submit">Login</button>
+        </form>
+        <pre id="loginOut"></pre>
+
+        <script>
+          loginForm.onsubmit = async (e) => {
+            e.preventDefault();
+            loginOut.textContent = "Loading...";
+            const data = await apiSend("/api/login", "POST", {
+              username: loginUser.value,
+              password: loginPass.value
+            });
+            loginOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+      </div>
+
+      <!-- SIGNUP PAGE -->
+      <div id="signup" class="page" style="display:none;">
+        <h2>Signup</h2>
+        <form id="signupForm">
+          <label>Username: <input id="signupUser"></label><br>
+          <label>Password: <input id="signupPass" type="password"></label><br>
+          <button type="submit">Signup</button>
+        </form>
+        <pre id="signupOut"></pre>
+
+        <script>
+          signupForm.onsubmit = async (e) => {
+            e.preventDefault();
+            signupOut.textContent = "Loading...";
+            const data = await apiSend("/api/signup", "POST", {
+              username: signupUser.value,
+              password: signupPass.value
+            });
+            signupOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="page" style="display:none;">
+        <h2>Dashboard Overview</h2>
+        <button id="refreshOverview">Refresh Overview</button>
+        <pre id="overviewOut">Click refresh.</pre>
+
+        <script>
+          refreshOverview.onclick = async () => {
+            overviewOut.textContent = "Loading...";
+            const data = await apiGet("/api/overview");
+            overviewOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+      </div>
+
+      <!-- PLAYERS -->
+      <div id="players" class="page" style="display:none;">
+        <h2>Players</h2>
+        <button id="loadPlayers">Load Players</button>
+        <pre id="playersOut"></pre>
+
+        <h3>Lookup Player</h3>
+        <form id="lookupPlayerForm">
+          <label>Username: <input id="lookupUser"></label>
+          <button type="submit">Lookup</button>
+        </form>
+        <pre id="lookupOut"></pre>
+
+        <script>
+          loadPlayers.onclick = async () => {
+            playersOut.textContent = "Loading...";
+            const data = await apiGet("/api/players");
+            playersOut.textContent = JSON.stringify(data, null, 2);
+          };
+
+          lookupPlayerForm.onsubmit = async (e) => {
+            e.preventDefault();
+            lookupOut.textContent = "Loading...";
+            const data = await apiGet("/api/players/" + lookupUser.value);
+            lookupOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+      </div>
+
+      <!-- GAMES -->
+      <div id="games" class="page" style="display:none;">
+        <h2>Games</h2>
+        <button id="loadGames">Load Games</button>
+        <pre id="gamesOut"></pre>
+
+        <h3>Create Game</h3>
+        <form id="createGameForm">
+          <label>Name: <input id="gameName"></label><br>
+          <label>Description: <input id="gameDesc"></label><br>
+          <button type="submit">Create</button>
+        </form>
+        <pre id="createGameOut"></pre>
+
+        <script>
+          loadGames.onclick = async () => {
+            gamesOut.textContent = "Loading...";
+            const data = await apiGet("/api/games");
+            gamesOut.textContent = JSON.stringify(data, null, 2);
+          };
+
+          createGameForm.onsubmit = async (e) => {
+            e.preventDefault();
+            createGameOut.textContent = "Sending...";
+            const data = await apiSend("/api/games", "POST", {
+              name: gameName.value,
+              description: gameDesc.value
+            });
+            createGameOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+        <script>
+            // Inside your website JavaScript action panel
+            async function playGame(placeId) {
+              // Grab the simulated logged-in UserID out of your current session elements
+              const currentUserId = document.getElementById("loginUser").value || "0";
+              const response = await apiSend("/api/play", "POST", { place_id: placeId });
+
+              // Pass place details, direct asset sources, AND user session IDs safely down the local protocol link
+              window.location.href = `pxgf://launch?src=${encodeURIComponent(response.download_url)}&host=http://localhost:8080&user=${currentUserId}`;
+            }
+        </script>
+      </div>
+
+      <!-- SERVERS -->
+      <div id="servers" class="page" style="display:none;">
+        <h2>Servers</h2>
+        <button id="loadServers">Load Servers</button>
+        <pre id="serversOut"></pre>
+
+        <script>
+          loadServers.onclick = async () => {
+            serversOut.textContent = "Loading...";
+            const data = await apiGet("/api/servers");
+            serversOut.textContent = JSON.stringify(data, null, 2);
+          };
+        </script>
+      </div>
+
+      <!-- RAW API -->
+      <div id="rawapi" class="page" style="display:none;">
+        <h2>Raw API Tester</h2>
+
+        <form id="rawForm">
+          <label>Method:
+            <select id="rawMethod">
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>DELETE</option>
+            </select>
+          </label><br>
+
+          <label>Path:
+            <input id="rawPath" value="/api/overview">
+          </label><br>
+
+          <label>Body (JSON):<br>
+            <textarea id="rawBody" rows="6" cols="60">{}</textarea>
+          </label><br>
+
+          <button type="submit">Send</button>
+        </form>
+
+        <pre id="rawOut"></pre>
+
+        <script>
+          rawForm.onsubmit = async (e) => {
+            e.preventDefault();
+            rawOut.textContent = "Sending...";
+
+            const method = rawMethod.value;
+            const path = rawPath.value;
+            const body = rawBody.value;
+
+            let res;
+            if (method === "GET" || method === "DELETE") {
+              res = await fetch(BASE_URL + path, { method });
+            } else {
+              res = await fetch(BASE_URL + path, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body
+              });
+            }
+
+            const text = await res.text();
+            try {
+              rawOut.textContent = JSON.stringify(JSON.parse(text), null, 2);
+            } catch {
+              rawOut.textContent = text;
+            }
+          };
+        </script>
+      </div>
+
+    </td>
+  </tr>
+</table>
+
+<!-- FOOTER -->
+<table width="100%" cellpadding="10" bgcolor="#c0d0ff" style="border-top:1px solid black;">
+  <tr>
+    <td align="center">
+      <small>© 2026 Pagram — Retro Edition</small>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
